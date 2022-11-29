@@ -401,7 +401,6 @@ char* CopyStr(char* s)
 
 class ParseInfo
 {
-    //Token next_token;
     public:
         CompilerInfo* comp; // IO files info
         Token token; // current token
@@ -422,7 +421,9 @@ class ParseInfo
             }
             else
             {
+                
                 ErrorMsg("unexpected token found: " + (string)token.str);
+                throw runtime_error("unexpected token found: " + (string)token.str);
             }
         }
 
@@ -543,15 +544,157 @@ class ParseInfo
         }
 
 
+        TreeNode* writeStmt()
+        {
+            TreeNode* curr = new TreeNode();
+            curr->node_kind = WRITE_NODE;
+            match(WRITE);
+
+            curr->child[0] = expr();
+
+            return curr;
+        }
+
+        TreeNode* readStmt()
+        {
+            TreeNode* curr = new TreeNode();
+            curr->node_kind = READ_NODE;
+            match(READ);
+            
+            if(token.type == ID)
+            {
+                curr->id = CopyStr(token.str);
+            }
+            match(ID);
+
+            return curr;
+        }
+
+        TreeNode* assignStmt()
+        {
+            TreeNode* curr = new TreeNode();
+            curr->node_kind = ASSIGN_NODE;
+
+            if(token.type == ID)
+            {
+                curr->id = CopyStr(token.str);
+            }
+            match(ID);
+            match(ASSIGN);
+
+            curr->child[0] = expr();
+
+            return curr;
+        }
+
+
+
+        TreeNode* stmtSeq()
+        {
+            TreeNode* root = stmt();
+            TreeNode* curr = root;
+            
+            while(token.type == SEMI_COLON)
+            {
+                match(SEMI_COLON);
+                TreeNode* c = stmt();
+
+                curr->sibling = c;
+                curr = c;
+            }
+
+            return root;
+        }
+
+
+        TreeNode* repeatStmt()
+        {
+            TreeNode* curr = new TreeNode();
+            curr->node_kind = REPEAT_NODE;
+
+            match(REPEAT);
+
+            curr->child[0] = stmtSeq();
+
+            match(UNTIL);
+
+            curr->child[1] = expr();
+
+            return curr;
+        }
+
+        TreeNode* ifStmt()
+        {
+            TreeNode* curr = new TreeNode();
+            curr->node_kind = IF_NODE;
+
+            match(IF);
+            
+            curr->child[0] = expr();
+            match(THEN);
+
+            curr->child[1] = stmtSeq();
+
+            if(token.type == ELSE)
+            {
+                match(ELSE);
+                curr->child[2] = stmtSeq();
+            }
+
+            match(END);
+
+            return curr;
+        }
+
+        TreeNode* stmt()
+        {
+            TreeNode* curr = NULL;
+
+            switch (token.type)
+            {
+            case IF:
+                curr = ifStmt();
+                break;
+            
+            case REPEAT:
+                curr = repeatStmt();
+                break;
+
+            case ID:
+                curr = assignStmt();
+                break;
+            
+            case READ:
+                curr = readStmt();
+                break;
+
+            case WRITE:
+                curr = writeStmt();
+                break;
+            
+            default:
+                throw runtime_error("stmt Not defined!!");
+                break;
+            }
+            
+            return curr;
+        }
+
+        TreeNode* program()
+        {
+            return stmtSeq();
+        }
+
+
         void parse()
         {
             
             while(token.type != ENDFILE)
             {
                 GetNextToken(comp, &token);
-                TreeNode* root = expr();
+                TreeNode* root = program();
                 PrintTree(root, 0);
-                //printf("debug output>> %s [%s]\n",token.str, TokenTypeStr[token.type]);
+
             }
 
         }
