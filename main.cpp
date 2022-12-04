@@ -453,7 +453,6 @@ class ParseInfo
 
                 case LEFT_PAREN:
                     match(LEFT_PAREN);
-                    // mathExpr here!!!!
                     curr = mathExpr();
                     match(RIGHT_PAREN);
                 break;
@@ -469,9 +468,6 @@ class ParseInfo
 
         TreeNode* factor()
         {
-            // delete this comment
-            // !!!!!!! check if it's right associative at the end !!!!!!!!!!!!!
-
             TreeNode* curr = newExpr();
             while(token.type == POWER)
             {
