@@ -469,7 +469,7 @@ class ParseInfo
         TreeNode* factor()
         {
             TreeNode* curr = newExpr();
-            while(token.type == POWER)
+            if(token.type == POWER)
             {
                 TreeNode* parent = new TreeNode();
                 parent->node_kind = OPER_NODE;
@@ -478,7 +478,7 @@ class ParseInfo
                 parent->child[0] = curr;
                 curr = parent;
                 match(POWER);
-                parent->child[1] = newExpr();
+                parent->child[1] = factor();
 
             }
 
@@ -515,7 +515,7 @@ class ParseInfo
                 parent->child[0] = curr;
                 curr = parent;
                 match(token.type);
-                parent->child[1] = factor();
+                parent->child[1] = term();
             }
 
             return curr;
@@ -533,7 +533,7 @@ class ParseInfo
                 parent->child[0] = curr;
                 curr = parent;
                 match(token.type);
-                parent->child[1] = factor();
+                parent->child[1] = mathExpr();
             }
 
             return curr;
